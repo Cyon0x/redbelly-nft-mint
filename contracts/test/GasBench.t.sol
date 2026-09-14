@@ -70,9 +70,11 @@ contract GasBenchTest is Test {
 
         uint256[] memory tokenIds = new uint256[](50);
         uint16[] memory editions = new uint16[](50);
+        // Counted in uint16 throughout, so no narrowing cast is needed at all.
+        uint16 edition = 1;
         for (uint256 i = 0; i < 50; ++i) {
             tokenIds[i] = i + 1;
-            editions[i] = uint16(i + 1);
+            editions[i] = edition++;
         }
 
         vm.prank(owner);
@@ -138,3 +140,4 @@ contract GasBenchTest is Test {
         console2.log("    cost (milliRBNT):", costWei / 1e15);
     }
 }
+

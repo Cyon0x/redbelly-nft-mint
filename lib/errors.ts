@@ -118,6 +118,58 @@ export function toFriendlyError(error: unknown): FriendlyError {
           benign: false,
           retryable: true,
         };
+
+      case "NonexistentToken": {
+        const tokenId = args[0] as bigint | undefined;
+        return {
+          title: "Token does not exist",
+          detail:
+            tokenId !== undefined
+              ? `Token #${tokenId.toString()} has not been minted yet. Token ids only run up to the collection's total minted.`
+              : "That token does not exist in this collection.",
+          benign: false,
+          retryable: true,
+        };
+      }
+
+      case "NoPhysicalAsset": {
+        const tokenId = args[0] as bigint | undefined;
+        return {
+          title: "No watch on this token",
+          detail:
+            tokenId !== undefined
+              ? `Token #${tokenId.toString()} is not bound to a limited-edition watch. Only 50 of the 500 tokens carry one.`
+              : "This token is not bound to a limited-edition watch.",
+          benign: false,
+          retryable: false,
+        };
+      }
+
+      case "NotTokenOwner": {
+        const tokenId = args[0] as bigint | undefined;
+        return {
+          title: "Not your token",
+          detail:
+            tokenId !== undefined
+              ? `Only the current owner of token #${tokenId.toString()} can claim its watch. If you sold the token, the claim right went with it.`
+              : "Only the current owner of this token can claim its watch.",
+          benign: false,
+          retryable: false,
+        };
+      }
+
+      case "AlreadyRedeemed": {
+        const tokenId = args[0] as bigint | undefined;
+        return {
+          title: "Watch already claimed",
+          detail:
+            tokenId !== undefined
+              ? `The watch behind token #${tokenId.toString()} has already been claimed. The claim is permanent and visible to any future buyer.`
+              : "The watch behind this token has already been claimed.",
+          benign: false,
+          retryable: false,
+        };
+      }
     }
   }
 

@@ -37,14 +37,33 @@ contract Deploy is Script {
     /// @notice Redbelly's identity registry on testnet (chain 153).
     address internal constant REDBELLY_TESTNET_ACCESS = 0x519ba1b48D571FD92FAF6FE4D20fe74Ca435B690;
 
+    /// @notice Mint price in wei, equivalent to $50 at $0.00230609 RBNT/USD (2026-09-14).
+    ///
+    /// @dev Defaulted to the real launch price rather than zero. A missed
+    ///      MINT_PRICE_WEI override should not silently produce a free mint — that is
+    ///      the expensive direction to get this wrong, and the price is owner-settable
+    ///      afterwards if RBNT moves.
+    ///
+    ///      This is NOT a USD peg. A fixed wei price floats against the dollar as RBNT
+    ///      trades. Recompute before deploying:
+    ///
+    ///          MINT_PRICE_WEI = $50 / RBNT_USD x 1e18
+    uint256 internal constant DEFAULT_MINT_PRICE_WEI = 21_681_721_008_286_758_600_704;
+
+    /// @notice Measured cost of deploying plus binding all 50 editions, in wei.
+    /// @dev ~1,181 RBNT at the measured 199,410 gwei base fee. Deployment is ~704 and
+    ///      the 50-edition batch ~477. Checked in {_preflight} so a dry run fails on a
+    ///      funding shortfall rather than halfway through a broadcast.
+    uint256 internal constant MIN_DEPLOY_BALANCE_WEI = 1_200 ether;
+
     function run() external returns (Vault01Genesis nft) {
         address deployer = msg.sender;
 
         // --- Resolve configuration ---------------------------------------
-        string memory name_ = vm.envOr("COLLECTION_NAME", string("Redbelly Genesis"));
-        string memory symbol_ = vm.envOr("COLLECTION_SYMBOL", string("RBGEN"));
+        string memory name_ = vm.envOr("COLLECTION_NAME", string("VAULT 01 - Genesis Collection"));
+        string memory symbol_ = vm.envOr("COLLECTION_SYMBOL", string("VAULT01"));
         uint256 maxSupply = vm.envOr("MAX_SUPPLY", uint256(500));
-        uint256 mintPrice = vm.envOr("MINT_PRICE_WEI", uint256(0));
+        uint256 mintPrice = vm.envOr("MINT_PRICE_WEI", DEFAULT_MINT_PRICE_WEI);
         uint256 maxPerWallet = vm.envOr("MAX_PER_WALLET", uint256(5));
         uint96 royaltyBps = uint96(vm.envOr("ROYALTY_BPS", uint256(500)));
         string memory unrevealedURI =
@@ -114,12 +133,24 @@ contract Deploy is Script {
         );
     }
 
-    /// @dev Fails fast, before spending gas, on the two mistakes that actually happen:
-    ///      a registry address with no contract behind it, and an unverified deployer
-    ///      (which Redbelly's protocol-level permissioning would reject anyway).
+    /// @dev Fails fast, before spending gas, on the three mistakes that actually happen:
+    ///      a registry address with no contract behind it, an unverified deployer (which
+    ///      Redbelly's protocol-level permissioning would reject anyway), and a deployer
+    ///      that cannot cover the deployment.
     function _preflight(address accessRegistry, address deployer) internal view {
         if (accessRegistry.code.length == 0) {
             revert("ACCESS_REGISTRY has no bytecode on this chain - wrong address or wrong network");
+        }
+
+        if (deployer.balance < MIN_DEPLOY_BALANCE_WEI) {
+            console2.log("");
+            console2.log("!! Deployer balance is below the measured launch cost.");
+            console2.log("!! Have (wei):", deployer.balance);
+            console2.log("!! Need (wei):", MIN_DEPLOY_BALANCE_WEI);
+            console2.log("!! This covers deployment (~704 RBNT) plus one batch binding the");
+            console2.log("!! 50 watch editions (~477 RBNT) at the measured base fee. Redbelly");
+            console2.log("!! gas is volatile - fund with margin.");
+            revert("Deployer underfunded for deployment plus edition binding");
         }
 
         try IRedbellyAccess(accessRegistry).isAllowed(deployer) returns (bool allowed) {
@@ -131,7 +162,7 @@ contract Deploy is Script {
                 console2.log("!! Complete verification at https://access.redbelly.network/ first.");
                 revert("Deployer not verified on Redbelly");
             }
-            console2.log("Preflight: deployer is verified on Redbelly.");
+            console2.log("Preflight: deployer is verified and funded on Redbelly.");
         } catch {
             revert("ACCESS_REGISTRY did not answer isAllowed(address) - is it the right contract?");
         }

@@ -76,9 +76,11 @@ contract PhysicalAssetTest is Test {
     {
         tokenIds = new uint256[](len);
         editions = new uint16[](len);
+        // Counted in uint16 throughout, so no narrowing cast is needed at all.
+        uint16 edition = firstEdition;
         for (uint256 i = 0; i < len; ++i) {
             tokenIds[i] = firstTokenId + i;
-            editions[i] = firstEdition + uint16(i);
+            editions[i] = edition++;
         }
     }
 
@@ -257,9 +259,10 @@ contract PhysicalAssetTest is Test {
         // 51 editions in one batch.
         uint256[] memory tokenIds = new uint256[](51);
         uint16[] memory editions = new uint16[](51);
+        uint16 edition = 1;
         for (uint256 i = 0; i < 51; ++i) {
             tokenIds[i] = 1;
-            editions[i] = uint16(i + 1);
+            editions[i] = edition++;
         }
 
         vm.prank(owner);
@@ -551,3 +554,4 @@ contract PhysicalAssetTest is Test {
         assertEq(nft.PHYSICAL_ALLOCATION(), 50);
     }
 }
+

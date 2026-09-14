@@ -1,4 +1,4 @@
-# Redbelly Genesis — NFT Mint
+# VAULT 01 — Genesis Collection NFT Mint
 
 A single-collection ERC-721 mint experience built natively for **Redbelly Network Mainnet**, with Redbelly identity verification enforced **on-chain** rather than merely checked in the interface.
 
@@ -72,7 +72,7 @@ The registry address is **owner-updatable but never zero**. Updatable, because a
 ├── components/
 │   ├── layout/             Navbar, Footer
 │   ├── mint/               MintCard, WalletButton, KycStatus
-│   ├── sections/           Hero, Gallery, Details, HowItWorks, WhyRedbelly, About, FAQ
+│   ├── sections/           Hero, Gallery, Details, Watches, HowItWorks, WhyRedbelly, About, FAQ
 │   └── ui/                 Button, CopyAddress, ThemeToggle, RedbellyMark
 ├── lib/
 │   ├── abis/               Trimmed contract ABIs
@@ -99,12 +99,20 @@ The registry address is **owner-updatable but never zero**. Updatable, because a
 npm install
 npm run dev            # http://localhost:3000
 
-npm run contracts:test # 62 tests
+npm run contracts:test # 94 tests (3 suites, count asserted by the runner)
 npm run contracts:gas  # gas report
 npm run build          # production build
 ```
 
-The site runs fully without a deployed contract — wallet connection and Redbelly verification work against live mainnet, and the mint card renders an explicit pre-launch state.
+The site runs fully without a deployed contract — wallet connection and Redbelly verification work against live mainnet, and the mint card renders an explicit pre-launch state. The watch checker shows the same pre-launch notice until the contract is live.
+
+---
+
+## The watches
+
+50 of the 500 tokens are bound to limited-edition physical mechanical watches. The binding (`assignPhysicalAssetBatch`), the serial derivation (`VAULT01-WATCH-017`), the holder-initiated claim (`redeemPhysicalAsset`), and the secondary-market honesty of a visible `Redeemed` status are all on-chain. The site's **Check a token** tool (in the Watches section) reads any token's binding, serial, and claim status live, and lets the owner claim directly.
+
+**The claim is the holder's own transaction.** The project cannot claim on a holder's behalf, and cannot erase a claim — `unassignPhysicalAsset` refuses once redeemed. Fulfilment runs against the `PhysicalAssetRedeemed` event, not a private database.
 
 ---
 

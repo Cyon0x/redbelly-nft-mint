@@ -123,7 +123,7 @@ contract Vault01Genesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard {
     /// @notice Redbelly's on-chain identity registry. Never zero. Owner-updatable.
     IRedbellyAccess public accessRegistry;
 
-    /// @notice Price per token in wei. Owner-updatable; starts at zero (free mint).
+    /// @notice Price per token in wei. Owner-updatable; set at deploy time (not free).
     uint256 public mintPrice;
 
     /// @notice Maximum tokens a single wallet may mint in total. Owner-updatable.
@@ -483,8 +483,9 @@ contract Vault01Genesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard {
     }
 
     /// @notice Update the price per token, in wei.
-    /// @dev Deliberately mutable: the collection launches as a free mint and pricing
-    ///      is expected to be revisited after launch.
+    /// @dev Deliberately mutable: the launch price is a fixed wei amount derived from a
+    ///      USD target, and a moving RBNT rate means occasional re-pricing keeps the
+    ///      dollar value honest. Each change is a public, auditable transaction.
     function setMintPrice(uint256 newPrice) external onlyOwner {
         uint256 previous = mintPrice;
         mintPrice = newPrice;

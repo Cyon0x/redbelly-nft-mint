@@ -1,32 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [mounted, setMounted] = useState(false);
+/**
+ * The theme attribute is owned by the document, not React — a plain useState copy
+ * would desync (tab restore, dev fast refresh, another tab changing the theme).
+ * Subscribe to it directly.
+ */
+function subscribeTheme(callback: () => void) {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => observer.disconnect();
+}
 
-  useEffect(() => {
-    setMounted(true);
-    const current = document.documentElement.getAttribute("data-theme");
-    setTheme(current === "dark" ? "dark" : "light");
-  }, []);
+export function ThemeToggle() {
+  const theme = useSyncExternalStore(
+    subscribeTheme,
+    () => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"),
+    () => "light" as const,
+  );
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem("rb-theme", next);
     } catch {
       /* storage can be unavailable; the toggle still works for this session */
     }
-  }
-
-  // Render a stable placeholder until mounted, so SSR and client agree.
-  if (!mounted) {
-    return <div className="h-9 w-9" aria-hidden="true" />;
   }
 
   return (

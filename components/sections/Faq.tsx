@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { SectionHeading } from "./Gallery";
 import { useCollectionState } from "@/lib/hooks/useCollection";
-import { collection, KYC_VERIFICATION_URL } from "@/lib/collection";
+import { collection, GAS_ESTIMATES, KYC_VERIFICATION_URL } from "@/lib/collection";
 import { activeChain } from "@/lib/chains";
 import { nftContractAddress } from "@/lib/addresses";
 import { cn, formatNumber, formatRbnt, truncateAddress } from "@/lib/utils";
@@ -26,7 +26,47 @@ export function Faq() {
       a:
         mintPrice === 0n
           ? "Minting is free. You pay only Redbelly network gas, which is roughly 23 RBNT for a single mint. Minting several at once costs significantly less gas per NFT — about 7 RBNT each when minting five."
-          : `${formatRbnt(mintPrice)} RBNT per NFT, plus network gas.`,
+          : `${formatRbnt(mintPrice)} RBNT per NFT (about $50 when the price was set), plus network gas — roughly 23 RBNT more for a single mint, though minting several at once costs far less gas per NFT (about 7 RBNT each at five).`,
+    },
+    {
+      q: "Does the price stay fixed in dollars?",
+      a: (
+        <>
+          No. The contract stores a price in RBNT, not dollars. It was set to approximately
+          $50 when the collection launched, but a fixed RBNT price is not a dollar peg — if
+          the RBNT rate moves, the dollar value of a mint moves with it. The owner can
+          re-price the collection at any time via a contract call, and every change is a
+          public, auditable transaction.
+        </>
+      ),
+    },
+    {
+      q: "What is the physical watch?",
+      a: (
+        <>
+          {collection.physicalAllocation} of the {formatNumber(maxSupply)} tokens are bound
+          to limited-edition mechanical watches. Each bound token carries a numbered
+          edition — the serial (like{" "}
+          <span className="font-mono">VAULT01-WATCH-017</span>) is derived on-chain from
+          the edition number and never stored separately. Which tokens carry a watch is
+          decided by the project and bound on-chain before minting opens, so it cannot be
+          quietly changed afterwards.
+        </>
+      ),
+    },
+    {
+      q: "How do I claim my watch?",
+      a: (
+        <>
+          If your token is bound to a watch, you claim it yourself from the Check a token
+          section below — the claim is your own on-chain transaction, not a form submitted
+          to the project. Claiming does not burn the token or restrict its transfer: the
+          token keeps trading freely, and its on-chain status shows{" "}
+          <span className="font-mono">Redeemed</span> so any future buyer can see the
+          watch has already been claimed before they bid. Claiming costs a few RBNT of
+          network gas (about {GAS_ESTIMATES.redeemWatchRbnt} RBNT), paid by the claimer.
+        </>
+      ),
     },
     {
       q: "How many NFTs can I mint?",

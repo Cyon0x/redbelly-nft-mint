@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { label: "Collection", href: "#collection" },
+  { label: "Watches", href: "#watches" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Why Redbelly", href: "#why-redbelly" },
   { label: "FAQ", href: "#faq" },

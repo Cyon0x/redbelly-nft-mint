@@ -169,3 +169,101 @@ export function useOwnedCount() {
 
   return { count: (data as bigint | undefined) ?? 0n, refetch };
 }
+
+/**
+ * Physical-watch state for one token id: edition, serial, status, and — when the
+ * token exists — whether the connected wallet owns it.
+ *
+ * Every read is optional: `tokenId` is user-supplied, and tokens above
+ * `totalMinted` legitimately do not exist. Invalid ids resolve to `notFound`
+ * rather than throwing, so the checker UI can guide rather than alarm.
+ */
+export function useWatchStatus(tokenId: bigint | null) {
+  const { address, isConnected } = useAccount();
+  const enabled = Boolean(isContractConfigured && tokenId !== null && tokenId > 0n);
+
+  const {
+    data: edition,
+    isError: editionError,
+    refetch: refetchEdition,
+  } = useReadContract({
+    address: nftContractAddress,
+    abi: vault01GenesisAbi,
+    functionName: "physicalEdition",
+    args: tokenId ? [tokenId] : undefined,
+    chainId: activeChain.id,
+    query: { enabled, retry: false },
+  });
+
+  const {
+    data: redeemed,
+    isError: redeemedError,
+    refetch: refetchRedeemed,
+  } = useReadContract({
+    address: nftContractAddress,
+    abi: vault01GenesisAbi,
+    functionName: "physicalRedeemed",
+    args: tokenId ? [tokenId] : undefined,
+    chainId: activeChain.id,
+    query: { enabled, retry: false },
+  });
+
+  // ownerOf reverts for tokens that were never minted; that is a state to surface,
+  // not an error to hide.
+  const {
+    data: owner,
+    isError: ownerError,
+    refetch: refetchOwner,
+  } = useReadContract({
+    address: nftContractAddress,
+    abi: vault01GenesisAbi,
+    functionName: "ownerOf",
+    args: tokenId ? [tokenId] : undefined,
+    chainId: activeChain.id,
+    query: { enabled, retry: false },
+  });
+
+  // physicalEdition returns 0 for both "not minted" and "minted but unassigned" —
+  // ownerOf is what distinguishes them.
+  const notFound =
+    tokenId !== null &&
+    (ownerError || (editionError && redeemedError && owner === undefined));
+
+  const editionValue = (edition as bigint | undefined) ?? 0n;
+
+  return {
+    /** Raw enum: 0 Unassigned, 1 Assigned, 2 Redeemed. */
+    edition: editionValue,
+    /** e.g. "VAULT01-WATCH-017". Empty when no watch is bound. */
+    serial:
+      editionValue > 0n
+        ? `VAULT01-WATCH-${editionValue.toString().padStart(3, "0")}`
+        : "",
+    status:
+      notFound
+        ? ("notFound" as const)
+        : !isContractConfigured
+          ? ("noContract" as const)
+          : editionValue === 0n
+            ? ("unassigned" as const)
+            : redeemed
+              ? ("redeemed" as const)
+              : ("assigned" as const),
+    /** True when the connected wallet owns this token. */
+    isOwned: isConnected && owner !== undefined && owner === address,
+    /** True when this token can be redeemed right now by this wallet. */
+    canRedeem:
+      isConnected &&
+      !notFound &&
+      editionValue > 0n &&
+      redeemed === false &&
+      owner !== undefined &&
+      owner === address,
+    /** Re-read all three values — call after a claim changes on-chain state. */
+    refetch: () => {
+      refetchEdition();
+      refetchRedeemed();
+      refetchOwner();
+    },
+  };
+}

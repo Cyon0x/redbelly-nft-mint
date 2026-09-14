@@ -65,7 +65,10 @@ export function Hero() {
             <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 lg:max-w-lg">
               <Fact label="Supply" value={formatNumber(maxSupply)} />
               <Fact label="Minted" value={formatNumber(totalMinted)} />
-              <Fact label="Standard" value="ERC-721" />
+              <Fact
+                label="Watches"
+                value={formatNumber(collection.physicalAllocation)}
+              />
               <Fact label="Chain ID" value={String(activeChain.id)} />
             </dl>
           </div>

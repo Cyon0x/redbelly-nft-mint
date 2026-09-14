@@ -1,5 +1,10 @@
 import { SectionHeading } from "./Gallery";
 import { collection } from "@/lib/collection";
+import { formatRbnt } from "@/lib/utils";
+
+function formatUsd(n: number): string {
+  return `$${n.toFixed(0)}`;
+}
 
 export function About() {
   return (
@@ -23,7 +28,15 @@ export function About() {
               are necessarily the same address.
             </p>
             <p>
-              The collection launches as a free mint — you pay only Redbelly network gas.
+              The collection is not purely digital. {collection.physicalAllocation} of the{" "}
+              {collection.maxSupply} tokens are bound to limited-edition mechanical watches —
+              each with a numbered serial that lives on-chain alongside its ownership
+              history. The binding is recorded by the contract, the claim is made by the
+              holder&apos;s own transaction, and no project-side database sits in between.
+            </p>
+            <p>
+              A mint costs {formatRbnt(collection.mintPriceWei)} RBNT per token — set at
+              launch to roughly {formatUsd(collection.mintPriceUsd)} — plus network gas.
               Supply is fixed permanently at {collection.maxSupply} by the contract and
               cannot be raised later.
             </p>

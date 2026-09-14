@@ -6,8 +6,8 @@ import { CopyAddress } from "@/components/ui/CopyAddress";
 import { useCollectionState } from "@/lib/hooks/useCollection";
 import { accessRegistryAddress, nftContractAddress } from "@/lib/addresses";
 import { activeChain, explorerAddressUrl } from "@/lib/chains";
-import { collection } from "@/lib/collection";
-import { formatNumber, formatRbnt } from "@/lib/utils";
+import { collection, mintPriceNote } from "@/lib/collection";
+import { approxUsd, formatNumber, formatRbnt } from "@/lib/utils";
 
 export function CollectionDetails() {
   const { maxSupply, mintPrice, maxPerWallet, soldOut, paused, isLive } = useCollectionState();
@@ -27,7 +27,15 @@ export function CollectionDetails() {
     { label: "Collection supply", value: formatNumber(maxSupply) },
     {
       label: "Mint price",
-      value: mintPrice === 0n ? "Free (network gas only)" : `${formatRbnt(mintPrice)} RBNT`,
+      value:
+        mintPrice === 0n
+          ? // The owner can set a zero price post-deployment; handled defensively.
+            "Free (network gas only)"
+          : `${formatRbnt(mintPrice)} RBNT (${approxUsd(mintPrice, mintPriceNote.referenceRate)})`,
+    },
+    {
+      label: "Physical watches",
+      value: `${formatNumber(collection.physicalAllocation)} of ${formatNumber(maxSupply)} tokens`,
     },
     { label: "Max per wallet", value: formatNumber(maxPerWallet) },
     { label: "Royalty", value: `${collection.royaltyBps / 100}% (ERC-2981)` },

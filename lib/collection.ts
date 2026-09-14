@@ -1,9 +1,6 @@
 /**
  * Single source of truth for everything collection-specific.
  *
- * Values marked PLACEHOLDER are awaiting a decision and are deliberately obvious
- * on screen rather than quietly wrong. Confirmed values are marked CONFIRMED.
- *
  * Numbers that exist on-chain (price, supply, per-wallet limit) are ALSO read live
  * from the contract at runtime — the values here are only fallbacks used before a
  * contract is configured, so the site can render a coherent pre-launch state.
@@ -17,16 +14,36 @@ export type CollectionLink = {
 };
 
 export const collection = {
-  /** PLACEHOLDER — awaiting final collection name. */
-  name: "Redbelly Genesis",
-  /** PLACEHOLDER — awaiting final symbol. */
-  symbol: "RBGEN",
+  /**
+   * CONFIRMED — the collection name carried on-chain.
+   *
+   * ASCII hyphen rather than the em dash the brand uses. This string is immutable and
+   * renders in every wallet and marketplace, so portability beats typography here. The
+   * em dash still appears in headings and body copy, where it is pure presentation.
+   */
+  name: "VAULT 01 - Genesis Collection",
+  /** CONFIRMED — token symbol. Immutable once deployed. */
+  symbol: "VAULT01",
 
   /** CONFIRMED — 500, immutable once deployed. */
   maxSupply: 500,
 
-  /** CONFIRMED — free mint at launch. Price is owner-settable post-launch. */
-  mintPriceWei: 0n,
+  /**
+   * INDICATIVE — the contract's `mintPrice`, in wei, at the RBNT rate noted below.
+   * The contract value is authoritative and is read live; this is only the pre-launch
+   * fallback. Recompute before deploying:
+   *
+   *     MINT_PRICE_WEI = $50 / RBNT_USD x 1e18
+   *
+   * At $0.00230609 (2026-09-14) that was 21,681,721,008,286,758,600,704 wei.
+   *
+   * NOTE: a fixed wei price is not a USD peg. If RBNT moves, the dollar value of a
+   * mint moves with it. Read {mintPriceNote} before changing anything here.
+   */
+  mintPriceWei: 21_681_721_008_286_758_600_704n,
+
+  /** CONFIRMED — the intended price in USD. The wei figure above is derived from it. */
+  mintPriceUsd: 50,
 
   /** DEFAULT — 5 per wallet. Owner-adjustable after deployment. */
   maxPerWallet: 5,
@@ -34,17 +51,37 @@ export const collection = {
   /** DEFAULT — 5% secondary royalty (ERC-2981). */
   royaltyBps: 500,
 
-  /** PLACEHOLDER — awaiting final collection description. */
-  tagline: "A 500-piece genesis collection, native to Redbelly Network.",
+  /** CONFIRMED — 50 of the 500 tokens can be bound to a physical watch. */
+  physicalAllocation: 50,
+
+  /** CONFIRMED — one line from the brand statement. */
+  tagline: "Own the Object. Verify the History.",
 
   description:
-    "Redbelly Genesis is a 500-piece collection minted natively on Redbelly Network — " +
-    "a chain where every participant is identity-verified at the protocol level. " +
-    "Every holder completed Redbelly verification before minting, enforced in the " +
-    "contract itself, not merely checked in the interface.",
+    "VAULT 01 explores the intersection of luxury collectibles and real world asset " +
+    "tokenisation. The Genesis collection contains 500 unique tokens on Redbelly " +
+    "Network, 50 of which are connected to limited edition physical mechanical " +
+    "watches. Each collectible is built around scarcity, authenticity, ownership and " +
+    "provenance — a bridge between physical collectibles and digital ownership.",
 
   /** Artwork is not final. The gallery renders generated placeholders until it is. */
   artworkFinal: false,
+} as const;
+
+/**
+ * The headline mint price, and the honest caveat attached to it.
+ *
+ * The contract stores a price in wei, not dollars. Pinning that to a dollar figure
+ * requires the owner to call `setMintPrice` when RBNT moves. Until that happens the
+ * two drift apart, so the UI states the RBNT amount as authoritative and shows the
+ * USD equivalent as an approximation rather than implying a peg the chain cannot keep.
+ */
+export const mintPriceNote = {
+  /** RBNT/USD at the time {collection.mintPriceWei} was computed. */
+  referenceRate: 0.00230609,
+  referenceDate: "2026-09-14",
+  /** True while the price is owner-managed rather than pegged. */
+  isManual: true,
 } as const;
 
 /**
@@ -68,12 +105,19 @@ export const officialLinks: CollectionLink[] = [
 export const KYC_VERIFICATION_URL = "https://access.redbelly.network/";
 
 /**
- * Measured on Redbelly mainnet during development, from real transaction receipts.
- * Used to set honest gas expectations in the UI instead of leaving users surprised.
+ * Measured on Redbelly mainnet, from real transaction receipts and the gas bench.
+ *
+ * USD figures use the reference rate in {mintPriceNote}. They are included because a
+ * bare RBNT figure is not actionable for a collector: 23 RBNT *sounds* like a lot and
+ * is in fact five cents.
  */
 export const GAS_ESTIMATES = {
   baseFeeGwei: 199_410,
   mintOneRbnt: 23.1,
   mintFiveRbnt: 35.6,
   perNftWhenMintingFive: 7.1,
+  mintOneUsd: 0.05,
+  /** Paid by whoever redeems, not by the project. */
+  redeemWatchRbnt: 5.1,
+  redeemWatchUsd: 0.01,
 } as const;

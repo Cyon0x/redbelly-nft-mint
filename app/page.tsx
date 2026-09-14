@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
 import { Gallery } from "@/components/sections/Gallery";
 import { CollectionDetails } from "@/components/sections/CollectionDetails";
+import { Watches } from "@/components/sections/Watches";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { WhyRedbelly } from "@/components/sections/WhyRedbelly";
 import { About } from "@/components/sections/About";
@@ -16,6 +17,7 @@ export default function Page() {
         <Hero />
         <Gallery />
         <CollectionDetails />
+        <Watches />
         <HowItWorks />
         <WhyRedbelly />
         <About />

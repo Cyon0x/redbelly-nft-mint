@@ -18,8 +18,8 @@ import { useCollectionState, useKycStatus, useWalletAllowance } from "@/lib/hook
 import { useMint, useNetwork, useRbntBalance } from "@/lib/hooks/useMint";
 import { isContractConfigured, nftContractAddress } from "@/lib/addresses";
 import { explorerTxUrl, activeChain } from "@/lib/chains";
-import { GAS_ESTIMATES } from "@/lib/collection";
-import { cn, formatNumber, formatRbnt, percentOf } from "@/lib/utils";
+import { GAS_ESTIMATES, mintPriceNote } from "@/lib/collection";
+import { cn, formatNumber, formatRbnt, percentOf, approxUsd } from "@/lib/utils";
 
 export function MintCard() {
   const { isConnected } = useAccount();
@@ -52,10 +52,13 @@ export function MintCard() {
     return Math.max(1, Math.min(walletCap || 1, supplyCap || 1, 20));
   }, [allowance.remaining, maxPerWallet, remaining, isConnected]);
 
-  // Keep the selection legal when limits change underneath it.
-  useEffect(() => {
+  // Keep the selection legal when limits change underneath it. Adjusting during
+  // render (the documented pattern) re-renders once, unlike an effect.
+  const [prevMaxSelectable, setPrevMaxSelectable] = useState(maxSelectable);
+  if (prevMaxSelectable !== maxSelectable) {
+    setPrevMaxSelectable(maxSelectable);
     setQuantity((q) => Math.min(Math.max(1, q), maxSelectable));
-  }, [maxSelectable]);
+  }
 
   const totalCost = mintPrice * BigInt(quantity);
   const insufficientFunds = isConnected && balance.value < totalCost;
@@ -109,8 +112,6 @@ export function MintCard() {
             <p className="mt-1 font-display text-2xl font-bold text-rb-ink sm:text-3xl">
               {stateLoading ? (
                 <span className="rb-skeleton inline-block h-8 w-20 rounded" />
-              ) : mintPrice === 0n ? (
-                "Free"
               ) : (
                 <>
                   {formatRbnt(mintPrice)}{" "}
@@ -118,6 +119,12 @@ export function MintCard() {
                 </>
               )}
             </p>
+            {/* Wei is authoritative; dollars are the reference-rate approximation. */}
+            {!stateLoading && mintPrice > 0n && (
+              <p className="mt-0.5 text-xs text-rb-muted">
+                {approxUsd(mintPrice, mintPriceNote.referenceRate)} per NFT
+              </p>
+            )}
           </div>
         </div>
 
@@ -211,9 +218,14 @@ export function MintCard() {
                 )}
               </p>
               {mintPrice > 0n && (
-                <p className="text-xs text-rb-muted">
-                  {quantity} × {formatRbnt(mintPrice)} RBNT
-                </p>
+                <>
+                  <p className="text-xs text-rb-muted">
+                    {approxUsd(totalCost, mintPriceNote.referenceRate)}
+                  </p>
+                  <p className="text-xs text-rb-muted">
+                    {quantity} × {formatRbnt(mintPrice)} RBNT
+                  </p>
+                </>
               )}
             </div>
           </div>
