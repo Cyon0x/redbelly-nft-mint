@@ -8,7 +8,7 @@ solc_version = "0.8.28"
 optimizer = true
 optimizer_runs = 1_000_000
 via_ir = false
-gas_reports = ["RedbellyGenesis"]
+gas_reports = ["Vault01Genesis"]
 fs_permissions = [{ access = "read", path = "./" }]
 
 remappings = [

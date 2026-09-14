@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccount, useChainId, useReadContract, useReadContracts } from "wagmi";
-import { redbellyGenesisAbi } from "@/lib/abis/redbellyGenesis";
+import { vault01GenesisAbi } from "@/lib/abis/vault01Genesis";
 import { redbellyAccessAbi } from "@/lib/abis/redbellyAccess";
 import { accessRegistryAddress, nftContractAddress, isContractConfigured } from "@/lib/addresses";
 import { activeChain } from "@/lib/chains";
@@ -20,12 +20,12 @@ export function useCollectionState() {
     allowFailure: false,
     contracts: enabled
       ? [
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "MAX_SUPPLY", chainId: activeChain.id },
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "totalMinted", chainId: activeChain.id },
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "mintPrice", chainId: activeChain.id },
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "maxPerWallet", chainId: activeChain.id },
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "mintOpen", chainId: activeChain.id },
-          { address: nftContractAddress!, abi: redbellyGenesisAbi, functionName: "paused", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "MAX_SUPPLY", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "totalMinted", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "mintPrice", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "maxPerWallet", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "mintOpen", chainId: activeChain.id },
+          { address: nftContractAddress!, abi: vault01GenesisAbi, functionName: "paused", chainId: activeChain.id },
         ]
       : [],
     query: {
@@ -126,7 +126,7 @@ export function useWalletAllowance() {
 
   const { data, isLoading, refetch } = useReadContract({
     address: nftContractAddress,
-    abi: redbellyGenesisAbi,
+    abi: vault01GenesisAbi,
     functionName: "remainingForWallet",
     args: address ? [address] : undefined,
     chainId: activeChain.id,
@@ -135,7 +135,7 @@ export function useWalletAllowance() {
 
   const { data: mintedByWallet, refetch: refetchMinted } = useReadContract({
     address: nftContractAddress,
-    abi: redbellyGenesisAbi,
+    abi: vault01GenesisAbi,
     functionName: "mintedBy",
     args: address ? [address] : undefined,
     chainId: activeChain.id,
@@ -160,7 +160,7 @@ export function useOwnedCount() {
 
   const { data, refetch } = useReadContract({
     address: nftContractAddress,
-    abi: redbellyGenesisAbi,
+    abi: vault01GenesisAbi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     chainId: activeChain.id,

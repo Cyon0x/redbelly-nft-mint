@@ -1,13 +1,13 @@
 /**
- * ABI for the RedbellyGenesis collection contract.
+ * ABI for the Vault01Genesis collection contract.
  *
  * Trimmed to what the frontend actually uses: the reads that drive the mint card,
  * the mint write, the Minted event, and the custom errors so reverts can be
  * translated into human-readable messages rather than raw hex.
  *
- * Generated from contracts/out/RedbellyGenesis.sol/RedbellyGenesis.json.
+ * Generated from contracts/out/Vault01Genesis.sol/Vault01Genesis.json.
  */
-export const redbellyGenesisAbi = [
+export const vault01GenesisAbi = [
   // ---------------- reads ----------------
   {
     inputs: [],
@@ -137,6 +137,63 @@ export const redbellyGenesisAbi = [
     stateMutability: "payable",
     type: "function",
   },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "redeemPhysicalAsset",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+
+  // ---------------- physical asset reads ----------------
+  {
+    inputs: [],
+    name: "PHYSICAL_ALLOCATION",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "assignedCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "physicalEdition",
+    outputs: [{ internalType: "uint16", name: "edition", type: "uint16" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "physicalRedeemed",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "physicalSerial",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "physicalStatus",
+    outputs: [
+      {
+        internalType: "enum Vault01Genesis.PhysicalStatus",
+        name: "",
+        type: "uint8",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
 
   // ---------------- events ----------------
   {
@@ -160,9 +217,37 @@ export const redbellyGenesisAbi = [
     name: "Transfer",
     type: "event",
   },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+      { indexed: true, internalType: "uint16", name: "edition", type: "uint16" },
+      { indexed: true, internalType: "address", name: "redeemer", type: "address" },
+    ],
+    name: "PhysicalAssetRedeemed",
+    type: "event",
+  },
 
   // ---------------- custom errors ----------------
   // Included so viem can decode reverts into precise, human-readable messages.
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "NoPhysicalAsset",
+    type: "error",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "tokenId", type: "uint256" },
+      { internalType: "address", name: "caller", type: "address" },
+    ],
+    name: "NotTokenOwner",
+    type: "error",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "AlreadyRedeemed",
+    type: "error",
+  },
   {
     inputs: [
       { internalType: "uint256", name: "requested", type: "uint256" },

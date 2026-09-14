@@ -10,7 +10,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog, type Hash } from "viem";
-import { redbellyGenesisAbi } from "@/lib/abis/redbellyGenesis";
+import { vault01GenesisAbi } from "@/lib/abis/vault01Genesis";
 import { nftContractAddress, isContractConfigured } from "@/lib/addresses";
 import { activeChain, activeChainHexId } from "@/lib/chains";
 import { toFriendlyError, type FriendlyError } from "@/lib/errors";
@@ -90,7 +90,7 @@ export function useMint() {
     for (const log of receipt.logs) {
       try {
         const decoded = decodeEventLog({
-          abi: redbellyGenesisAbi,
+          abi: vault01GenesisAbi,
           data: log.data,
           topics: log.topics,
         });
@@ -145,7 +145,7 @@ export function useMint() {
       try {
         const hash = await writeContractAsync({
           address: nftContractAddress,
-          abi: redbellyGenesisAbi,
+          abi: vault01GenesisAbi,
           functionName: "mint",
           args: [BigInt(quantity)],
           value: totalCostWei,

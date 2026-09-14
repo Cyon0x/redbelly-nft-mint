@@ -28,15 +28,22 @@ These were measured directly against Redbelly Mainnet during development, not as
 | `isAllowed(real mainnet tx sender)` ×4 | `true` |
 | Routescan verification API (chain 151) | HTTP 200 |
 
-**Gas is expensive on Redbelly.** Measured from real transaction receipts:
+**Gas is expensive on Redbelly.** Measured at ~199,410 gwei base fee:
 
 | Action | Gas | Cost at ~199,410 gwei base fee |
 |---|---|---|
-| Deployment | 2,963,487 | **~591 RBNT** |
-| Mint 1 | 115,980 | ~23.1 RBNT |
-| Mint 5 | 178,360 | ~35.6 RBNT (**~7.1 each**) |
+| Deployment | 3,530,617 | **~704 RBNT** |
+| Bind 50 watch allocations (one batch) | 2,390,244 | **~477 RBNT** |
+| Bind 50 as 50 separate transactions | 3,397,250 | ~677 RBNT |
+| Mint 1 | 116,024 | ~23.1 RBNT |
+| Mint 5 | 178,404 | ~35.6 RBNT (**~7.1 each**) |
+| Redeem a watch (**paid by the holder**) | 25,455 | ~5.1 RBNT |
 
-Minting five at once costs roughly 69% less gas per NFT than minting one at a time. The mint card tells users this rather than letting them overpay silently.
+**Budget ~1,181 RBNT to launch** (deploy + one batch binding the 50 editions), not the
+~600 previously assumed. The deployer must hold all of it up front; redemption gas is
+borne by individual holders as they claim.
+
+Minting five at once costs roughly 69% less gas per NFT than minting one at a time. The mint card tells users this rather than letting them overpay silently. Binding in one batch rather than fifty transactions saves a further ~201 RBNT (~30%).
 
 ---
 
@@ -78,9 +85,9 @@ The registry address is **owner-updatable but never zero**. Updatable, because a
 │   └── utils.ts
 └── contracts/              Foundry project
     ├── src/
-    │   ├── RedbellyGenesis.sol
+    │   ├── Vault01Genesis.sol
     │   └── interfaces/IRedbellyAccess.sol
-    ├── test/               62 tests, 93.8% line / 100% branch coverage
+    ├── test/               94 tests (93 unit + gas bench)
     └── script/             Deploy.s.sol, verify.sh
 ```
 
@@ -115,7 +122,10 @@ The key is encrypted with a password you choose and stored in `~/.foundry/keysto
 
 ### 2. Fund the deployer
 
-The deployer needs **~600 RBNT** (deployment measured at ~591 RBNT) and **must itself be Redbelly-verified** — protocol-level permissioning means an unverified wallet cannot deploy at all. The deploy script checks both before spending anything.
+The deployer needs **~1,200 RBNT**: ~704 for deployment plus ~477 to bind the 50 watch
+editions in one batch. It **must itself be Redbelly-verified** — protocol-level
+permissioning means an unverified wallet cannot deploy at all. The deploy script checks
+both before spending anything.
 
 ### 3. Dry run
 
@@ -158,8 +168,33 @@ cast send <NFT_ADDRESS> "unpause()" --rpc-url redbelly_mainnet --account redbell
 | Reveal real artwork | `cast send <addr> "reveal(string)" "ipfs://<cid>/"` |
 | Withdraw proceeds | `cast send <addr> "withdraw(address)" <to>` |
 | Repoint identity registry | `cast send <addr> "setAccessRegistry(address)" <addr>` |
+| Bind tokens to watch editions | `cast send <addr> "assignPhysicalAssetBatch(uint256[],uint16[])" "[1,2,3]" "[1,2,3]"` |
+| Undo a binding (before redemption) | `cast send <addr> "unassignPhysicalAsset(uint256)" <tokenId>` |
 
-**What the owner cannot do:** raise max supply (immutable), mint without paying, disable identity enforcement, take tokens from holders, or block transfers.
+**What the owner cannot do:** raise max supply (immutable), mint without paying, disable
+identity enforcement, take tokens from holders, or block transfers.
+
+**What the owner cannot do about watches:** claim a watch on a holder's behalf. Redemption
+is callable only by the token's owner, so the on-chain claim record is always the
+collector's own transaction. Neither can the owner erase a claim — `unassignPhysicalAsset`
+refuses once redeemed.
+
+### Watch edition assignment
+
+The contract stores an arbitrary token-to-edition mapping and takes no position on which
+tokens *should* receive a watch. That is deliberate: the obvious rule ("tokens #1–#50")
+depends on who transacts first, and with a 500 supply and a 5-per-wallet cap the first ten
+wallets to mint would take all fifty watches. Decide and publish the allocation policy
+before minting opens, then bind the outcome in one batch:
+
+```bash
+cast send <addr> "assignPhysicalAssetBatch(uint256[],uint16[])" \
+  "[12,47,83,...]" "[1,2,3,...]" --rpc-url redbelly_mainnet --account redbelly-deployer
+```
+
+An unassigned token reports `physicalStatus = Unassigned`; a bound one `Assigned`; a
+claimed one `Redeemed`. Serials (`VAULT01-WATCH-017`) are derived from the edition and
+never stored. Once assignment is done, **`assignedCount` must equal 50.**
 
 ---
 

@@ -11,7 +11,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 import { IRedbellyAccess } from "./interfaces/IRedbellyAccess.sol";
 
-/// @title RedbellyGenesis
+/// @title Vault01Genesis
 /// @author Cyon
 /// @notice A single-collection ERC-721 for Redbelly Network that enforces Redbelly's
 ///         on-chain identity verification at mint time.
@@ -49,7 +49,7 @@ import { IRedbellyAccess } from "./interfaces/IRedbellyAccess.sol";
 ///      protocol permissioning still requires whoever *sends* a transfer to be
 ///      verified. Mint-time verification is enforced; post-mint transfer restriction
 ///      is deliberately not imposed.
-contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard {
+contract Vault01Genesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard {
     using Strings for uint256;
 
     // ---------------------------------------------------------------------
@@ -83,6 +83,24 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
     error NonexistentToken(uint256 tokenId);
     /// @notice Thrown when a per-wallet limit of zero is supplied.
     error InvalidWalletLimit();
+    /// @notice Thrown when tokenIds and editions differ in length.
+    error LengthMismatch(uint256 tokenIdsLength, uint256 editionsLength);
+    /// @notice Thrown when an edition falls outside 1..PHYSICAL_ALLOCATION.
+    error InvalidEdition(uint16 edition);
+    /// @notice Thrown when an edition is already bound to a token.
+    error EditionAlreadyAssigned(uint16 edition);
+    /// @notice Thrown when a token already carries a physical edition.
+    error TokenAlreadyAssigned(uint256 tokenId);
+    /// @notice Thrown when an assignment would push past {PHYSICAL_ALLOCATION}.
+    error ExceedsPhysicalAllocation(uint256 requested, uint256 remaining);
+    /// @notice Thrown when a token carries no physical asset.
+    error NoPhysicalAsset(uint256 tokenId);
+    /// @notice Thrown when the caller does not own the token being redeemed.
+    error NotTokenOwner(uint256 tokenId, address caller);
+    /// @notice Thrown when the physical asset behind a token is already redeemed.
+    error AlreadyRedeemed(uint256 tokenId);
+    /// @notice Thrown when trying to unassign a physical asset that was already redeemed.
+    error CannotUnassignRedeemed(uint256 tokenId);
 
     // ---------------------------------------------------------------------
     // Immutable configuration
@@ -90,6 +108,13 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
 
     /// @notice Hard cap on the collection. Immutable: a supply commitment to holders.
     uint256 public immutable MAX_SUPPLY;
+
+    /// @notice Number of physical watches backing the collection. Immutable.
+    uint256 public constant PHYSICAL_ALLOCATION = 50;
+
+    /// @dev Prefix for derived physical serials. Never stored per token — the serial
+    ///      is a pure function of the edition, so writing it on-chain would be waste.
+    string private constant _SERIAL_PREFIX = "VAULT01-WATCH-";
 
     // ---------------------------------------------------------------------
     // Mutable configuration
@@ -120,6 +145,33 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
     bool public revealed;
 
     // ---------------------------------------------------------------------
+    // Physical asset registry
+    // ---------------------------------------------------------------------
+
+    /// @notice Lifecycle of the physical asset behind a token.
+    /// @dev Unassigned covers both "not eligible" and "not yet allocated". The contract
+    ///      deliberately takes no position on which tokens *should* be eligible — see
+    ///      {assignPhysicalAssetBatch}.
+    enum PhysicalStatus {
+        Unassigned,
+        Assigned,
+        Redeemed
+    }
+
+    /// @notice Edition (1..PHYSICAL_ALLOCATION) bound to a token. 0 means unassigned.
+    mapping(uint256 tokenId => uint16 edition) public physicalEdition;
+
+    /// @notice Token bound to an edition. Guards against binding one edition twice.
+    /// @dev Token ids start at 1, so 0 is an unambiguous empty sentinel.
+    mapping(uint16 edition => uint256 tokenId) public editionToken;
+
+    /// @notice Whether the physical asset behind a token has been claimed by its holder.
+    mapping(uint256 tokenId => bool) public physicalRedeemed;
+
+    /// @notice How many tokens currently carry a physical edition.
+    uint256 public assignedCount;
+
+    // ---------------------------------------------------------------------
     // Events
     // ---------------------------------------------------------------------
 
@@ -145,6 +197,14 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
     event Revealed(string baseURI);
     /// @notice Emitted when proceeds are withdrawn.
     event Withdrawn(address indexed to, uint256 amount);
+    /// @notice Emitted when a token is bound to a physical edition.
+    event PhysicalAssetAssigned(uint256 indexed tokenId, uint16 indexed edition);
+    /// @notice Emitted when a physical edition is unbound from a token.
+    event PhysicalAssetUnassigned(uint256 indexed tokenId, uint16 indexed edition);
+    /// @notice Emitted when a holder claims the physical asset behind their token.
+    event PhysicalAssetRedeemed(
+        uint256 indexed tokenId, uint16 indexed edition, address indexed redeemer
+    );
 
     // ---------------------------------------------------------------------
     // Construction
@@ -241,6 +301,96 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
     }
 
     // ---------------------------------------------------------------------
+    // Physical asset registry
+    // ---------------------------------------------------------------------
+
+    /// @notice Bind tokens to physical editions (watch serials).
+    /// @param tokenIds Tokens to bind. Must be existing tokens.
+    /// @param editions Edition numbers, 1..PHYSICAL_ALLOCATION, parallel to `tokenIds`.
+    /// @dev ## Why this is a free-form mapping rather than "token id == edition"
+    ///
+    ///      The obvious rule is "tokens #1..#50 get the 50 watches". That rule cannot be
+    ///      enforced by this contract, because it depends on who mints first — and with a
+    ///      500 supply and a per-wallet cap of 5, the first ten wallets to transact would
+    ///      take all fifty watches. That is a gas auction, not a collector base.
+    ///
+    ///      Binding is therefore an explicit owner action over an arbitrary token set, so
+    ///      the allocation policy can be decided (and published) before minting opens,
+    ///      and can be 1:1 with the first fifty tokens or a fair draw over all holders.
+    ///      The contract records the outcome; it does not choose the policy.
+    ///
+    ///      Batched because fifty individual calls would spend roughly 1M gas in base
+    ///      fees alone on Redbelly.
+    function assignPhysicalAssetBatch(uint256[] calldata tokenIds, uint16[] calldata editions)
+        external
+        onlyOwner
+    {
+        uint256 len = tokenIds.length;
+        if (len != editions.length) revert LengthMismatch(len, editions.length);
+
+        uint256 assigned = assignedCount;
+        if (assigned + len > PHYSICAL_ALLOCATION) {
+            revert ExceedsPhysicalAllocation(len, PHYSICAL_ALLOCATION - assigned);
+        }
+
+        for (uint256 i = 0; i < len; ++i) {
+            uint256 tokenId = tokenIds[i];
+            uint16 edition = editions[i];
+
+            if (edition == 0 || edition > PHYSICAL_ALLOCATION) revert InvalidEdition(edition);
+            if (_ownerOf(tokenId) == address(0)) revert NonexistentToken(tokenId);
+            if (physicalEdition[tokenId] != 0) revert TokenAlreadyAssigned(tokenId);
+            if (editionToken[edition] != 0) revert EditionAlreadyAssigned(edition);
+
+            physicalEdition[tokenId] = edition;
+            editionToken[edition] = tokenId;
+
+            emit PhysicalAssetAssigned(tokenId, edition);
+        }
+
+        assignedCount = assigned + len;
+    }
+
+    /// @notice Unbind a physical edition from a token.
+    /// @param tokenId Token whose binding should be removed.
+    /// @dev Exists so a mistaken assignment can be corrected before a holder acts on it.
+    ///      Refuses once redeemed: the claim already happened and must stay auditable.
+    function unassignPhysicalAsset(uint256 tokenId) external onlyOwner {
+        uint16 edition = physicalEdition[tokenId];
+        if (edition == 0) revert NoPhysicalAsset(tokenId);
+        if (physicalRedeemed[tokenId]) revert CannotUnassignRedeemed(tokenId);
+
+        physicalEdition[tokenId] = 0;
+        editionToken[edition] = 0;
+        unchecked {
+            --assignedCount;
+        }
+
+        emit PhysicalAssetUnassigned(tokenId, edition);
+    }
+
+    /// @notice Claim the physical watch behind `tokenId`.
+    /// @param tokenId A token the caller owns that carries a physical edition.
+    /// @dev Deliberately callable by the **token holder**, not the project. The holder's
+    ///      own transaction is the on-chain record of the claim; the project fulfils
+    ///      against the resulting event. A project-side "mark as shipped" flag would be
+    ///      exactly the private database this collection exists to avoid.
+    ///
+    ///      Redemption does NOT restrict transfers. Redeemed tokens keep trading freely,
+    ///      and {physicalStatus} reports `Redeemed` so a secondary buyer can see the
+    ///      watch has already been claimed before they bid.
+    function redeemPhysicalAsset(uint256 tokenId) external {
+        uint16 edition = physicalEdition[tokenId];
+        if (edition == 0) revert NoPhysicalAsset(tokenId);
+        if (_ownerOf(tokenId) != msg.sender) revert NotTokenOwner(tokenId, msg.sender);
+        if (physicalRedeemed[tokenId]) revert AlreadyRedeemed(tokenId);
+
+        physicalRedeemed[tokenId] = true;
+
+        emit PhysicalAssetRedeemed(tokenId, edition, msg.sender);
+    }
+
+    // ---------------------------------------------------------------------
     // Views
     // ---------------------------------------------------------------------
 
@@ -274,6 +424,29 @@ contract RedbellyGenesis is ERC721, ERC2981, Ownable, Pausable, ReentrancyGuard 
     /// @notice Whether minting is currently open.
     function mintOpen() external view returns (bool) {
         return !paused() && totalMinted < MAX_SUPPLY;
+    }
+
+    /// @notice The physical watch serial bound to `tokenId`, e.g. "VAULT01-WATCH-017".
+    /// @return Empty string when the token carries no physical asset.
+    /// @dev Derived, never stored — the serial is a pure function of the edition.
+    function physicalSerial(uint256 tokenId) external view returns (string memory) {
+        uint16 edition = physicalEdition[tokenId];
+        if (edition == 0) return "";
+        return string.concat(_SERIAL_PREFIX, _pad3(edition));
+    }
+
+    /// @notice Lifecycle state of the physical asset behind `tokenId`.
+    function physicalStatus(uint256 tokenId) external view returns (PhysicalStatus) {
+        if (physicalEdition[tokenId] == 0) return PhysicalStatus.Unassigned;
+        if (physicalRedeemed[tokenId]) return PhysicalStatus.Redeemed;
+        return PhysicalStatus.Assigned;
+    }
+
+    /// @dev Zero-pads to three digits, so serials sort and read correctly (007, 017, 050).
+    function _pad3(uint256 n) private pure returns (string memory) {
+        if (n < 10) return string.concat("00", n.toString());
+        if (n < 100) return string.concat("0", n.toString());
+        return n.toString();
     }
 
     /// @inheritdoc ERC721

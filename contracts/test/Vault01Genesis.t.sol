@@ -8,7 +8,7 @@ import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
-import { RedbellyGenesis } from "../src/RedbellyGenesis.sol";
+import { Vault01Genesis } from "../src/Vault01Genesis.sol";
 import {
     MockRedbellyAccess,
     RejectingReceiver,
@@ -16,8 +16,8 @@ import {
     ReentrantMinter
 } from "./mocks/MockRedbellyAccess.sol";
 
-contract RedbellyGenesisTest is Test {
-    RedbellyGenesis internal nft;
+contract Vault01GenesisTest is Test {
+    Vault01Genesis internal nft;
     MockRedbellyAccess internal registry;
 
     address internal owner = makeAddr("owner");
@@ -42,7 +42,7 @@ contract RedbellyGenesisTest is Test {
     function setUp() public {
         registry = new MockRedbellyAccess();
 
-        nft = new RedbellyGenesis(
+        nft = new Vault01Genesis(
             "Redbelly Genesis",
             "RBGEN",
             MAX_SUPPLY,
@@ -87,7 +87,7 @@ contract RedbellyGenesisTest is Test {
 
     function test_Deployment_StartsPaused() public {
         // Fresh instance: confirm it deploys paused before setUp's unpause.
-        RedbellyGenesis fresh = new RedbellyGenesis(
+        Vault01Genesis fresh = new Vault01Genesis(
             "X", "X", 10, 0, 1, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         assertTrue(fresh.paused());
@@ -95,29 +95,29 @@ contract RedbellyGenesisTest is Test {
     }
 
     function test_Deployment_RevertsOnZeroRegistry() public {
-        vm.expectRevert(RedbellyGenesis.ZeroAddress.selector);
-        new RedbellyGenesis(
+        vm.expectRevert(Vault01Genesis.ZeroAddress.selector);
+        new Vault01Genesis(
             "X", "X", 10, 0, 1, address(0), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
     }
 
     function test_Deployment_RevertsOnZeroRoyaltyReceiver() public {
-        vm.expectRevert(RedbellyGenesis.ZeroAddress.selector);
-        new RedbellyGenesis(
+        vm.expectRevert(Vault01Genesis.ZeroAddress.selector);
+        new Vault01Genesis(
             "X", "X", 10, 0, 1, address(registry), owner, address(0), 0, UNREVEALED_URI
         );
     }
 
     function test_Deployment_RevertsOnZeroSupply() public {
-        vm.expectRevert(RedbellyGenesis.ZeroQuantity.selector);
-        new RedbellyGenesis(
+        vm.expectRevert(Vault01Genesis.ZeroQuantity.selector);
+        new Vault01Genesis(
             "X", "X", 0, 0, 1, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
     }
 
     function test_Deployment_RevertsOnZeroWalletLimit() public {
-        vm.expectRevert(RedbellyGenesis.InvalidWalletLimit.selector);
-        new RedbellyGenesis(
+        vm.expectRevert(Vault01Genesis.InvalidWalletLimit.selector);
+        new Vault01Genesis(
             "X", "X", 10, 0, 0, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
     }
@@ -174,7 +174,7 @@ contract RedbellyGenesisTest is Test {
 
     function test_Mint_RevertsOnZeroQuantity() public {
         vm.prank(alice);
-        vm.expectRevert(RedbellyGenesis.ZeroQuantity.selector);
+        vm.expectRevert(Vault01Genesis.ZeroQuantity.selector);
         nft.mint(0);
     }
 
@@ -185,7 +185,7 @@ contract RedbellyGenesisTest is Test {
     function test_Mint_RevertsWhenNotVerified() public {
         vm.prank(mallory);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.NotVerifiedOnRedbelly.selector, mallory)
+            abi.encodeWithSelector(Vault01Genesis.NotVerifiedOnRedbelly.selector, mallory)
         );
         nft.mint(1);
     }
@@ -193,7 +193,7 @@ contract RedbellyGenesisTest is Test {
     function test_Mint_SucceedsAfterVerificationGranted() public {
         vm.prank(mallory);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.NotVerifiedOnRedbelly.selector, mallory)
+            abi.encodeWithSelector(Vault01Genesis.NotVerifiedOnRedbelly.selector, mallory)
         );
         nft.mint(1);
 
@@ -212,7 +212,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.NotVerifiedOnRedbelly.selector, alice)
+            abi.encodeWithSelector(Vault01Genesis.NotVerifiedOnRedbelly.selector, alice)
         );
         nft.mint(1);
     }
@@ -238,7 +238,7 @@ contract RedbellyGenesisTest is Test {
 
     function test_Mint_RevertsWhenExceedingMaxSupply() public {
         // Use a small-supply instance to exhaust it cheaply.
-        RedbellyGenesis small = new RedbellyGenesis(
+        Vault01Genesis small = new Vault01Genesis(
             "S", "S", 3, 0, 10, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         vm.prank(owner);
@@ -249,12 +249,12 @@ contract RedbellyGenesisTest is Test {
         assertEq(small.remainingSupply(), 0);
 
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(RedbellyGenesis.ExceedsMaxSupply.selector, 1, 0));
+        vm.expectRevert(abi.encodeWithSelector(Vault01Genesis.ExceedsMaxSupply.selector, 1, 0));
         small.mint(1);
     }
 
     function test_Mint_RevertsWhenPartiallyExceedingSupply() public {
-        RedbellyGenesis small = new RedbellyGenesis(
+        Vault01Genesis small = new Vault01Genesis(
             "S", "S", 3, 0, 10, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         vm.prank(owner);
@@ -265,12 +265,12 @@ contract RedbellyGenesisTest is Test {
 
         // Only 1 left, asking for 2.
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(RedbellyGenesis.ExceedsMaxSupply.selector, 2, 1));
+        vm.expectRevert(abi.encodeWithSelector(Vault01Genesis.ExceedsMaxSupply.selector, 2, 1));
         small.mint(2);
     }
 
     function test_Mint_ExactlyExhaustsSupply() public {
-        RedbellyGenesis small = new RedbellyGenesis(
+        Vault01Genesis small = new Vault01Genesis(
             "S", "S", 2, 0, 10, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         vm.prank(owner);
@@ -292,7 +292,7 @@ contract RedbellyGenesisTest is Test {
         vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(
-                RedbellyGenesis.ExceedsWalletLimit.selector, MAX_PER_WALLET + 1, MAX_PER_WALLET
+                Vault01Genesis.ExceedsWalletLimit.selector, MAX_PER_WALLET + 1, MAX_PER_WALLET
             )
         );
         nft.mint(MAX_PER_WALLET + 1);
@@ -302,7 +302,7 @@ contract RedbellyGenesisTest is Test {
         vm.startPrank(alice);
         nft.mint(3);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.ExceedsWalletLimit.selector, 3, 2)
+            abi.encodeWithSelector(Vault01Genesis.ExceedsWalletLimit.selector, 3, 2)
         );
         nft.mint(3);
         vm.stopPrank();
@@ -320,7 +320,7 @@ contract RedbellyGenesisTest is Test {
     }
 
     function test_RemainingForWallet_CappedBySupply() public {
-        RedbellyGenesis small = new RedbellyGenesis(
+        Vault01Genesis small = new Vault01Genesis(
             "S", "S", 2, 0, 10, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         // Wallet limit is 10 but only 2 tokens exist.
@@ -337,7 +337,7 @@ contract RedbellyGenesisTest is Test {
         assertEq(nft.balanceOf(alice), 0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.ExceedsWalletLimit.selector, 1, 0)
+            abi.encodeWithSelector(Vault01Genesis.ExceedsWalletLimit.selector, 1, 0)
         );
         nft.mint(1);
         vm.stopPrank();
@@ -350,7 +350,7 @@ contract RedbellyGenesisTest is Test {
     function test_Mint_RevertsOnOverpaymentWhenFree() public {
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.IncorrectPayment.selector, 0, 1 ether)
+            abi.encodeWithSelector(Vault01Genesis.IncorrectPayment.selector, 0, 1 ether)
         );
         nft.mint{ value: 1 ether }(1);
     }
@@ -372,7 +372,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.IncorrectPayment.selector, 50 ether, 49 ether)
+            abi.encodeWithSelector(Vault01Genesis.IncorrectPayment.selector, 50 ether, 49 ether)
         );
         nft.mint{ value: 49 ether }(2);
     }
@@ -383,7 +383,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.IncorrectPayment.selector, 25 ether, 0)
+            abi.encodeWithSelector(Vault01Genesis.IncorrectPayment.selector, 25 ether, 0)
         );
         nft.mint(1);
     }
@@ -394,7 +394,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.IncorrectPayment.selector, 25 ether, 26 ether)
+            abi.encodeWithSelector(Vault01Genesis.IncorrectPayment.selector, 25 ether, 26 ether)
         );
         nft.mint{ value: 26 ether }(1);
     }
@@ -491,13 +491,13 @@ contract RedbellyGenesisTest is Test {
 
     function test_SetMaxPerWallet_RevertsOnZero() public {
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.InvalidWalletLimit.selector);
+        vm.expectRevert(Vault01Genesis.InvalidWalletLimit.selector);
         nft.setMaxPerWallet(0);
     }
 
     function test_SetAccessRegistry_RevertsOnZero() public {
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.ZeroAddress.selector);
+        vm.expectRevert(Vault01Genesis.ZeroAddress.selector);
         nft.setAccessRegistry(address(0));
     }
 
@@ -517,7 +517,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.NotVerifiedOnRedbelly.selector, alice)
+            abi.encodeWithSelector(Vault01Genesis.NotVerifiedOnRedbelly.selector, alice)
         );
         nft.mint(1);
     }
@@ -534,7 +534,7 @@ contract RedbellyGenesisTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(
-            abi.encodeWithSelector(RedbellyGenesis.ExceedsWalletLimit.selector, 1, 0)
+            abi.encodeWithSelector(Vault01Genesis.ExceedsWalletLimit.selector, 1, 0)
         );
         nft.mint(1);
     }
@@ -566,7 +566,7 @@ contract RedbellyGenesisTest is Test {
     }
 
     function test_TokenURI_RevertsForNonexistentToken() public {
-        vm.expectRevert(abi.encodeWithSelector(RedbellyGenesis.NonexistentToken.selector, 999));
+        vm.expectRevert(abi.encodeWithSelector(Vault01Genesis.NonexistentToken.selector, 999));
         nft.tokenURI(999);
     }
 
@@ -616,7 +616,7 @@ contract RedbellyGenesisTest is Test {
 
     function test_Withdraw_RevertsOnZeroBalance() public {
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.NothingToWithdraw.selector);
+        vm.expectRevert(Vault01Genesis.NothingToWithdraw.selector);
         nft.withdraw(owner);
     }
 
@@ -627,7 +627,7 @@ contract RedbellyGenesisTest is Test {
         nft.mint{ value: 1 ether }(1);
 
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.ZeroAddress.selector);
+        vm.expectRevert(Vault01Genesis.ZeroAddress.selector);
         nft.withdraw(address(0));
     }
 
@@ -639,7 +639,7 @@ contract RedbellyGenesisTest is Test {
 
         RejectingReceiver rejecting = new RejectingReceiver();
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.WithdrawFailed.selector);
+        vm.expectRevert(Vault01Genesis.WithdrawFailed.selector);
         nft.withdraw(address(rejecting));
     }
 
@@ -682,7 +682,7 @@ contract RedbellyGenesisTest is Test {
 
     function test_SetDefaultRoyalty_RevertsOnZeroReceiver() public {
         vm.prank(owner);
-        vm.expectRevert(RedbellyGenesis.ZeroAddress.selector);
+        vm.expectRevert(Vault01Genesis.ZeroAddress.selector);
         nft.setDefaultRoyalty(address(0), 500);
     }
 
@@ -719,7 +719,7 @@ contract RedbellyGenesisTest is Test {
         if (quantity > MAX_PER_WALLET) {
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    RedbellyGenesis.ExceedsWalletLimit.selector, quantity, MAX_PER_WALLET
+                    Vault01Genesis.ExceedsWalletLimit.selector, quantity, MAX_PER_WALLET
                 )
             );
             nft.mint(quantity);
@@ -741,7 +741,7 @@ contract RedbellyGenesisTest is Test {
         vm.prank(alice);
         if (sent != price) {
             vm.expectRevert(
-                abi.encodeWithSelector(RedbellyGenesis.IncorrectPayment.selector, price, sent)
+                abi.encodeWithSelector(Vault01Genesis.IncorrectPayment.selector, price, sent)
             );
             nft.mint{ value: sent }(1);
         } else {
@@ -754,7 +754,7 @@ contract RedbellyGenesisTest is Test {
         uint256 wallets = bound(walletCount, 1, 40);
         uint256 each = bound(perWallet, 1, 5);
 
-        RedbellyGenesis small = new RedbellyGenesis(
+        Vault01Genesis small = new Vault01Genesis(
             "S", "S", 20, 0, 5, address(registry), owner, royaltyReceiver, 0, UNREVEALED_URI
         );
         vm.prank(owner);

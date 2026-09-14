@@ -2,11 +2,11 @@
 pragma solidity 0.8.28;
 
 import { Script, console2 } from "forge-std/Script.sol";
-import { RedbellyGenesis } from "../src/RedbellyGenesis.sol";
+import { Vault01Genesis } from "../src/Vault01Genesis.sol";
 import { IRedbellyAccess } from "../src/interfaces/IRedbellyAccess.sol";
 
 /// @title Deploy
-/// @notice Deploys {RedbellyGenesis}.
+/// @notice Deploys {Vault01Genesis}.
 ///
 /// @dev ## Secure signing — no private key in a file
 ///
@@ -37,7 +37,7 @@ contract Deploy is Script {
     /// @notice Redbelly's identity registry on testnet (chain 153).
     address internal constant REDBELLY_TESTNET_ACCESS = 0x519ba1b48D571FD92FAF6FE4D20fe74Ca435B690;
 
-    function run() external returns (RedbellyGenesis nft) {
+    function run() external returns (Vault01Genesis nft) {
         address deployer = msg.sender;
 
         // --- Resolve configuration ---------------------------------------
@@ -59,7 +59,7 @@ contract Deploy is Script {
 
         // --- Report --------------------------------------------------------
         console2.log("=====================================================");
-        console2.log("  RedbellyGenesis deployment");
+        console2.log("  Vault01Genesis deployment");
         console2.log("=====================================================");
         console2.log("Chain ID:          ", block.chainid);
         console2.log("Deployer:          ", deployer);
@@ -80,7 +80,7 @@ contract Deploy is Script {
         // --- Deploy ---------------------------------------------------------
         vm.startBroadcast();
 
-        nft = new RedbellyGenesis(
+        nft = new Vault01Genesis(
             name_,
             symbol_,
             maxSupply,
@@ -96,7 +96,7 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         console2.log("");
-        console2.log("Deployed RedbellyGenesis at:", address(nft));
+        console2.log("Deployed Vault01Genesis at:", address(nft));
         console2.log("");
         console2.log("The contract is deployed PAUSED. Next steps:");
         console2.log("  1. Verify on Routescan:      npm run verify");

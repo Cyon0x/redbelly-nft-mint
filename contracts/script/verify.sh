@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Verify RedbellyGenesis on Routescan after deployment.
+# Verify Vault01Genesis on Routescan after deployment.
 #
 # Routescan exposes an Etherscan-compatible verification API per network. The
 # mainnet (chain 151) endpoint was confirmed reachable during development.
@@ -55,8 +55,8 @@ CTOR_ARGS=$(cast abi-encode \
   "$ROYALTY_BPS" \
   "$UNREVEALED_URI")
 
-echo "==> Verifying RedbellyGenesis at ${NFT_ADDRESS} on chain ${CHAIN_ID}"
-forge verify-contract "$NFT_ADDRESS" src/RedbellyGenesis.sol:RedbellyGenesis \
+echo "==> Verifying Vault01Genesis at ${NFT_ADDRESS} on chain ${CHAIN_ID}"
+forge verify-contract "$NFT_ADDRESS" src/Vault01Genesis.sol:Vault01Genesis \
   --chain "$CHAIN_ID" \
   --verifier-url "$EXPLORER_API_URL" \
   --etherscan-api-key "$EXPLORER_API_KEY" \
