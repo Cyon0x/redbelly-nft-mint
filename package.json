@@ -1,0 +1,41 @@
+{
+  "name": "redbelly-nft-mint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single-collection NFT mint experience for Redbelly Network Mainnet, with on-chain KYC enforcement.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test -vv",
+    "contracts:gas": "cd contracts && forge test --gas-report",
+    "contracts:fmt": "cd contracts && forge fmt",
+    "deploy:dry-run": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet",
+    "deploy:mainnet": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet --broadcast",
+    "verify": "cd contracts && ./script/verify.sh"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.29.0",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.6.0",
+    "viem": "^2.55.11",
+    "wagmi": "^2.19.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

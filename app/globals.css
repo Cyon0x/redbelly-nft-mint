@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+/*
+ * Redbelly Genesis design system.
+ *
+ * Palette derived from Redbelly's own brand: the coral-red primary (#FF5050),
+ * a deep ink navy for text, and warm off-white surfaces. Red is used as an
+ * accent with intent — for state, emphasis and action — never as decoration.
+ *
+ * No gradients-as-decoration, no glassmorphism, no glow. Depth comes from
+ * hairline borders and restrained shadows.
+ */
+
+/* `static` so every token is emitted to :root even when a utility for it is not
+   used — the dark theme below overrides these variables at runtime, which only
+   works if they are actually present. */
+@theme static {
+  /* --- Brand ------------------------------------------------------- */
+  --color-rb-red: #ff5050;
+  --color-rb-red-bright: #ff4646;
+  --color-rb-red-solid: #c81e3a;
+  --color-rb-red-deep: #7a1226;
+  --color-rb-red-tint: #fff2f3;
+  --color-rb-red-tint-2: #ffe4e6;
+
+  /* --- Ink / neutrals ---------------------------------------------- */
+  --color-rb-ink: #1a0a0c;
+  --color-rb-ink-soft: #4a3336;
+  --color-rb-muted: #6b4a4e;
+  --color-rb-navy: #283a46;
+
+  /* --- Surfaces ----------------------------------------------------- */
+  --color-rb-bg: #ffffff;
+  --color-rb-bg-alt: #fff8f8;
+  --color-rb-surface: #ffffff;
+  --color-rb-border: #f0dcde;
+  --color-rb-border-strong: #e2c4c7;
+
+  /* --- Status ------------------------------------------------------- */
+  --color-rb-success: #15803d;
+  --color-rb-success-bg: #e7f7ec;
+  --color-rb-warning: #b45309;
+  --color-rb-warning-bg: #fdf1e0;
+  --color-rb-danger: #c81e3a;
+  --color-rb-danger-bg: #fff2f3;
+
+  /* --- Type --------------------------------------------------------- */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* --- Motion ------------------------------------------------------- */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Dark theme. Kept genuinely dark rather than "dark grey", so the red reads
+   as a signal against it. */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-rb-bg: #140406;
+    --color-rb-bg-alt: #1c0709;
+    --color-rb-surface: #22090c;
+    --color-rb-border: #3a1519;
+    --color-rb-border-strong: #4d1c21;
+
+    --color-rb-ink: #fff2f3;
+    --color-rb-ink-soft: #e6cdd0;
+    --color-rb-muted: #c99aa0;
+
+    --color-rb-red: #ff4d5e;
+    --color-rb-red-solid: #db2d4c;
+    --color-rb-red-tint: #2a0b0f;
+    --color-rb-red-tint-2: #3a1015;
+
+    --color-rb-success: #4ade80;
+    --color-rb-success-bg: #0f2a18;
+    --color-rb-warning: #fbbf24;
+    --color-rb-warning-bg: #2d1e08;
+    --color-rb-danger: #ff6b7d;
+    --color-rb-danger-bg: #2a0b0f;
+  }
+
+  * {
+    border-color: var(--color-rb-border);
+  }
+
+  body {
+    background-color: var(--color-rb-bg);
+    color: var(--color-rb-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Visible, branded focus ring on every interactive element.
+     Never removed — only restyled. */
+  :focus-visible {
+    outline: 2px solid var(--color-rb-red);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect users who ask for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Skip link — visible only when focused. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background: var(--color-rb-red);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0;
+  }
+  .skip-link:focus {
+    left: 0;
+  }
+
+  .rb-container {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .rb-container { padding-inline: 2rem; }
+  }
+
+  /* Hairline card. Depth from border + a whisper of shadow, not blur. */
+  .rb-card {
+    background: var(--color-rb-surface);
+    border: 1px solid var(--color-rb-border);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(26 10 12 / 0.04);
+  }
+
+  .rb-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-rb-muted);
+  }
+}
+
+@layer utilities {
+  /* Subtle grid backdrop for the hero. Structural, not decorative glow. */
+  .rb-grid-bg {
+    background-image:
+      linear-gradient(to right, var(--color-rb-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-rb-border) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+
+  .rb-animate-in {
+    animation: rb-fade-up 0.5s var(--ease-out-quint) both;
+  }
+
+  @keyframes rb-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes rb-pulse-ring {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-rb-red) 45%, transparent); }
+    70%  { box-shadow: 0 0 0 10px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .rb-pulse {
+    animation: rb-pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes rb-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Loading skeleton */
+  .rb-skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-rb-bg-alt) 25%,
+      var(--color-rb-border) 50%,
+      var(--color-rb-bg-alt) 75%
+    );
+    background-size: 200% 100%;
+    animation: rb-shimmer 1.6s ease-in-out infinite;
+  }
+}
