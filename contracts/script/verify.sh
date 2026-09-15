@@ -28,10 +28,10 @@ set -euo pipefail
 : "${NFT_ADDRESS:?Set NFT_ADDRESS to the deployed contract address}"
 : "${OWNER_ADDRESS:?Set OWNER_ADDRESS to the owner passed at deployment}"
 
-: "${COLLECTION_NAME:=Redbelly Genesis}"
-: "${COLLECTION_SYMBOL:=RBGEN}"
+: "${COLLECTION_NAME:=VAULT 01 - Genesis Collection}"
+: "${COLLECTION_SYMBOL:=VAULT01}"
 : "${MAX_SUPPLY:=500}"
-: "${MINT_PRICE_WEI:=0}"
+: "${MINT_PRICE_WEI:=21681721008286758600704}"
 : "${MAX_PER_WALLET:=5}"
 : "${ACCESS_REGISTRY:=0xcb385cD90ca6b219798F57B4a7958897e91A9163}"
 : "${ROYALTY_RECEIVER:=$OWNER_ADDRESS}"

@@ -3,7 +3,8 @@
 import { MintCard } from "@/components/mint/MintCard";
 import { collection } from "@/lib/collection";
 import { activeChain } from "@/lib/chains";
-import { placeholderDataUri } from "@/lib/placeholderArt";
+import Image from "next/image";
+import { heroArtwork } from "@/lib/artwork";
 import { useCollectionState } from "@/lib/hooks/useCollection";
 import { formatNumber } from "@/lib/utils";
 
@@ -94,29 +95,28 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function HeroArtwork() {
-  // Three representative pieces; the centre one is featured.
-  const ids = [7, 1, 23];
-
   return (
     <div className="relative">
       <div className="flex items-end justify-center gap-3">
-        {ids.map((id, i) => {
+        {heroArtwork.map((watch, i) => {
           const featured = i === 1;
           return (
             <div
-              key={id}
+              key={watch.id}
               className={
                 featured
                   ? "relative w-1/2 overflow-hidden rounded-2xl border border-rb-border-strong shadow-lg"
                   : "relative hidden w-1/4 overflow-hidden rounded-xl border border-rb-border opacity-70 sm:block"
               }
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={placeholderDataUri(id, 400)}
-                alt={`Placeholder artwork, piece ${id}`}
-                className="aspect-square w-full"
-                loading={featured ? "eager" : "lazy"}
+              <Image
+                src={watch.src}
+                alt={watch.alt}
+                width={watch.width}
+                height={watch.height}
+                priority={featured}
+                sizes="(max-width: 640px) 50vw, 33vw"
+                className="aspect-square w-full object-contain"
               />
             </div>
           );
@@ -125,7 +125,7 @@ function HeroArtwork() {
 
       {!collection.artworkFinal && (
         <p className="mt-3 text-center text-xs text-rb-muted">
-          Placeholder artwork — final collection art pending
+          Approved preview artwork — final on-chain collection art pending
         </p>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { http, createConfig, cookieStorage, createStorage } from "wagmi";
-import { injected, metaMask } from "wagmi/connectors";
+import { injected } from "wagmi";
 import { redbellyMainnet, redbellyTestnet } from "./chains";
 
 /**
@@ -12,10 +12,7 @@ import { redbellyMainnet, redbellyTestnet } from "./chains";
  */
 export const wagmiConfig = createConfig({
   chains: [redbellyMainnet, redbellyTestnet],
-  connectors: [
-    metaMask(),
-    injected({ shimDisconnect: true }),
-  ],
+  connectors: [injected({ shimDisconnect: true })],
   storage: createStorage({ storage: cookieStorage }),
   ssr: true,
   transports: {

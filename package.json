@@ -5,7 +5,7 @@
   "description": "Single-collection NFT mint experience for Redbelly Network Mainnet, with on-chain KYC enforcement.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -13,8 +13,8 @@
     "contracts:test": "./contracts/script/test.sh",
     "contracts:gas": "cd contracts && forge test --force --gas-report",
     "contracts:fmt": "cd contracts && forge fmt",
-    "deploy:dry-run": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet",
-    "deploy:mainnet": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet --broadcast",
+    "deploy:dry-run": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet --account redbelly-deployer",
+    "deploy:mainnet": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url redbelly_mainnet --account redbelly-deployer --broadcast",
     "verify": "cd contracts && ./script/verify.sh"
   },
   "dependencies": {
