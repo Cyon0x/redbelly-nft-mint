@@ -5,7 +5,6 @@ import { Menu, X } from "lucide-react";
 import { WalletButton } from "@/components/mint/WalletButton";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RedbellyMark } from "@/components/ui/RedbellyMark";
-import { collection } from "@/lib/collection";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -46,8 +45,7 @@ export function Navbar() {
     >
       <nav className="rb-container flex h-16 items-center justify-between gap-4" aria-label="Main">
         <a href="#top" className="flex items-center gap-2.5 font-display font-bold">
-          <RedbellyMark className="h-7 w-7" />
-          <span className="text-rb-ink">{collection.name}</span>
+          <RedbellyMark className="h-8 w-auto" />
         </a>
 
         <ul className="hidden items-center gap-1 lg:flex">

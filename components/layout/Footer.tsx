@@ -13,8 +13,7 @@ export function Footer() {
           {/* Identity */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5">
-              <RedbellyMark className="h-7 w-7" />
-              <span className="font-display font-bold text-rb-ink">{collection.name}</span>
+              <RedbellyMark className="h-9 w-auto" />
             </div>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-rb-muted">
               {collection.maxSupply} pieces, minted natively on {activeChain.name} with

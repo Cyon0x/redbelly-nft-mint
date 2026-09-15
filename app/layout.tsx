@@ -20,6 +20,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: "/images/logo/redbelly-logo.png",
+    shortcut: "/images/logo/redbelly-logo.png",
+    apple: "/images/logo/redbelly-logo.png",
+  },
   title: {
     default: `${collection.name} — Mint on Redbelly Network`,
     template: `%s — ${collection.name}`,
@@ -31,11 +36,13 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: collection.name,
     type: "website",
+    images: ["/images/logo/redbelly-logo-wide.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: `${collection.name} — Mint on Redbelly Network`,
     description: collection.description,
+    images: ["/images/logo/redbelly-logo-wide.png"],
   },
   robots: { index: true, follow: true },
 };
