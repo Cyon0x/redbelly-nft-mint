@@ -14,6 +14,7 @@ import { vault01GenesisAbi } from "@/lib/abis/vault01Genesis";
 import { nftContractAddress, isContractConfigured } from "@/lib/addresses";
 import { activeChain, activeChainHexId } from "@/lib/chains";
 import { toFriendlyError, type FriendlyError } from "@/lib/errors";
+import { MINT_FROZEN, MINT_FROZEN_NOTICE } from "@/lib/flags";
 
 /** Where the mint currently is in its lifecycle. */
 export type MintPhase =
@@ -190,6 +191,19 @@ export function useMint() {
           error: {
             title: "Minting not open yet",
             detail: "The collection contract has not been deployed yet.",
+            benign: false,
+            retryable: false,
+          },
+        });
+        return;
+      }
+
+      if (MINT_FROZEN) {
+        setSubmission({
+          step: "failed",
+          error: {
+            title: "Minting is closed",
+            detail: MINT_FROZEN_NOTICE,
             benign: false,
             retryable: false,
           },

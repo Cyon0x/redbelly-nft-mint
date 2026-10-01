@@ -6,6 +6,7 @@ import { redbellyAccessAbi } from "@/lib/abis/redbellyAccess";
 import { accessRegistryAddress, nftContractAddress, isContractConfigured } from "@/lib/addresses";
 import { activeChain } from "@/lib/chains";
 import { collection } from "@/lib/collection";
+import { MINT_FROZEN } from "@/lib/flags";
 
 /**
  * Live collection state read from the contract.
@@ -64,7 +65,9 @@ export function useCollectionState() {
     mintPrice,
     maxPerWallet,
     mintOpen,
-    paused,
+    // The site kill switch is OR'd in so the UI can never invite a mint while the
+    // collection is meant to be closed, independently of the contract's own flag.
+    paused: paused || MINT_FROZEN,
     soldOut: totalMinted >= maxSupply,
     isLoading,
     isError,

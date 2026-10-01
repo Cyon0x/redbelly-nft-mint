@@ -228,6 +228,7 @@ See `.env.example`. Frontend needs only:
 | `NEXT_PUBLIC_NFT_CONTRACT_ADDRESS` | Deployed collection contract. Empty before launch. |
 | `NEXT_PUBLIC_CHAIN_ID` | `151` mainnet (default), `153` testnet |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for metadata |
+| `NEXT_PUBLIC_MINT_FROZEN` | Emergency mint kill switch. Anything other than `false` keeps the UI frozen (fail-closed); `false` re-enables the button, and the contract must also be unpaused on-chain. |
 
 No secrets are required to build or run the frontend.
 

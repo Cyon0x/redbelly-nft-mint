@@ -19,6 +19,7 @@ import { useMint, useNetwork, useRbntBalance } from "@/lib/hooks/useMint";
 import { isContractConfigured, nftContractAddress } from "@/lib/addresses";
 import { explorerTxUrl, activeChain } from "@/lib/chains";
 import { GAS_ESTIMATES, mintPriceNote } from "@/lib/collection";
+import { MINT_FROZEN, MINT_FROZEN_NOTICE } from "@/lib/flags";
 import { cn, formatNumber, formatRbnt, percentOf, approxUsd } from "@/lib/utils";
 
 export function MintCard() {
@@ -152,6 +153,8 @@ export function MintCard() {
       {/* Body */}
       <div className="space-y-5 p-5 sm:p-6">
         {!isContractConfigured && <PreLaunchNotice />}
+
+        {MINT_FROZEN && <MintFrozenNotice />}
 
         {/* KYC */}
         {isConnected && !isWrongNetwork && <KycStatus />}
@@ -386,7 +389,7 @@ function MintAction({
   if (paused) {
     return (
       <Button size="lg" className="w-full" disabled>
-        Mint Closed
+        Mint Paused
       </Button>
     );
   }
@@ -583,6 +586,20 @@ function MintSuccess({
             moment to appear in your wallet.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function MintFrozenNotice() {
+  return (
+    <div className="rounded-xl border border-rb-border-strong bg-rb-warning-bg p-4">
+      <div className="flex items-start gap-3">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-rb-warning" aria-hidden="true" />
+        <div>
+          <p className="font-semibold text-rb-ink">Minting is paused</p>
+          <p className="mt-1 text-sm text-rb-ink-soft">{MINT_FROZEN_NOTICE}</p>
+        </div>
       </div>
     </div>
   );
